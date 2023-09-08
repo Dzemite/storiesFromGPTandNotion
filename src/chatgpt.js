@@ -12,33 +12,35 @@ const openai = new OpenAI({
   apiKey: config.get('OPENAI_KEY'),
 });
 
-const getMessage = (m) => `
-  Напиши из этих тезисов последовательную и эмоциональную историю: ${m}
+const getMessage = (m, story = true) => story
+    ? `
+      Напиши из этих тезисов последовательную и эмоциональную историю: ${m}
 
-  Эти тезисы описывают ключивые моменты дня.
-  Необходимо в итоге получить историю с эмоциями, чтобы я запомнил этот день и смог в последствии рассказывать её друзьям.
-  Ограничься 200 словами, соблюдай последовательность и учитывай контекст.
-`;
+      Эти тезисы описывают ключивые моменты дня.
+      Необходимо в итоге получить историю с эмоциями, чтобы я запомнил этот день и смог в последствии рассказывать её друзьям.
+      Ограничься 200 словами, соблюдай последовательность и учитывай контекст.
+    `
+    : m;
 
-export async function chatGPT(message = '') {
-  const messages = [
-    {
+export async function chatGPT(message = '', story = true) {
+  const messages = [];
+  if (story) {
+    messages.push({
       role: ROLES.SYSTEM,
       content: 'Ты опытный копирайтер, который пишет краткие эмоциональные статьи для соц сетей.'
-    },
-    {
-      role: ROLES.USER,
-      content: getMessage(message)
-    }
-  ];
+    });
+  }
+  
+  messages.push({
+    role: ROLES.USER,
+    content: getMessage(message, story)
+  });
 
   try {
     const completion = await openai.chat.completions.create({
       messages,
       model: CHAT_GPT_MODEL
     });
-
-    console.log(completion.choices[0].message);
 
     return completion.choices[0].message;
   } catch (e) {
